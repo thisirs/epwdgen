@@ -118,8 +118,8 @@ FILE and separated by SEP."
                                        (symbol-name (nth 1 preset)))))
          (func-name (if (fboundp epwdgen-name) epwdgen-name (nth 1 preset))))
     (when (called-interactively-p 'interactive)
-      (insert (apply fct-name (cddr preset))))
-    (apply fct-name (cddr preset))))
+      (insert (apply func-name (cddr preset))))
+    (apply func-name (cddr preset))))
 
 
 (provide 'epwdgen)
