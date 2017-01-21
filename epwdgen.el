@@ -72,36 +72,36 @@ When some argument is missing, ask for it."
 (epwdgen-define-generator password
     "nLength? \nxNumber? \nxUpper? \nxLower? \nxSymbol? \nxAmbiguous? "
   (length number upper lower symbol ambiguous)
-    "Return a string of LENGTH random characters.  If UPPER is non-nil,
+  "Return a string of LENGTH random characters.  If UPPER is non-nil,
 use uppercase letters. If lower is non-nil, use lowercase
 letters. If NUMBER is non-nil, use numbers. If SYMBOL is non-nil,
 use one of \"!\"#$%&'()*+'-./:;<=>?@`{}|~\". If AMBIGUOUS is nil,
 avoid characters like \"l\" and \"1\", \"O\" and \"0\"."
-    (let ((char-list
-           (append
-            (and upper (loop for i from ?A to ?Z unless
-                             (member i (unless ambiguous '(?I ?O ?G)))
-                             collect i))
-            (and lower (loop for i from ?a to ?z unless
-                             (member i (unless ambiguous '(?l ?o)))
-                             collect i))
-            (and number (loop for i from ?0 to ?9 unless
-                              (member i (unless ambiguous '(?0 ?1 ?6)))
-                              collect i))
-            (and symbol (loop for i = '(?! ?@ ?# ?$ ?% ?& ?* ?( ?) ?+ ?= ?/
-                                           ?{ ?} ?[ ?] ?: ?\; ?< ?>)
-                              unless (member i '(?_ ?- ?| ?, ?. ?` ?' ?~ ?^ ?\"))
-                              collect i)))))
-      (random t)
-      (apply 'string
-             (loop for i from 1 to length
-                   collect (nth (random (length char-list)) char-list)))))
+  (let ((char-list
+         (append
+          (and upper (loop for i from ?A to ?Z unless
+                           (member i (unless ambiguous '(?I ?O ?G)))
+                           collect i))
+          (and lower (loop for i from ?a to ?z unless
+                           (member i (unless ambiguous '(?l ?o)))
+                           collect i))
+          (and number (loop for i from ?0 to ?9 unless
+                            (member i (unless ambiguous '(?0 ?1 ?6)))
+                            collect i))
+          (and symbol (loop for i = '(?! ?@ ?# ?$ ?% ?& ?* ?( ?) ?+ ?= ?/
+                                         ?{ ?} ?[ ?] ?: ?\; ?< ?>)
+                            unless (member i '(?_ ?- ?| ?, ?. ?` ?' ?~ ?^ ?\"))
+                            collect i)))))
+    (random t)
+    (apply 'string
+           (loop for i from 1 to length
+                 collect (nth (random (length char-list)) char-list)))))
 
 (epwdgen-define-generator passphrase
     "nLength? \nsFile? \nsSep? "
+  (length file sep)
   "Generate a passphrase of length LENGTH from words taken from
 FILE and separated by SEP."
-  (length file sep)
   (unless (executable-find "shuf") (error "Unable to find program `shuf'"))
   (let* ((shuf-cmd (format "shuf -n %d %s" length (shell-quote-argument file)))
          (pass-out (shell-command-to-string shuf-cmd)))
@@ -115,7 +115,7 @@ FILE and separated by SEP."
                   (completing-read "Password preset: " names nil t))))
   (let* ((preset (assoc method epwdgen-password-presets))
          (epwdgen-name (intern (concat "epwdgen-generate-password:"
-                                   (symbol-name (nth 1 preset)))))
+                                       (symbol-name (nth 1 preset)))))
          (func-name (if (fboundp epwdgen-name) epwdgen-name (nth 1 preset))))
     (when (called-interactively-p 'interactive)
       (insert (apply fct-name (cddr preset))))
