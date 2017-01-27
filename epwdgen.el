@@ -28,16 +28,17 @@
 (require 'cl-lib)
 
 (defvar epwdgen-password-presets
+  '(("alphanumeric, " password :upper t :number t :lower t :symbol nil :ambiguous t)
+    ("passphrase, 4 words, space separator" passphrase
+     :sep " " :file "/home/sylvain/CloudStation/Sylvain/wordlist.lst")
+    ("upper+number, length 4" password :length 4 :upper t :number t :lower nil
+     :symbol nil :ambiguous nil))
   "List of preset to generate passwords.
 
 Each element is of the form (DESC SYMBOL [ARGS]) where DESC is a
 string describing the preset and SYMBOL the function name to call
 with arguments ARGS. SYMBOL can also be a symbol used with the
-macro `epwdgen-define-generator'."
-  '(("passphrase, 4 words, space separator" passphrase
-     :sep " " :file "/home/sylvain/CloudStation/Sylvain/wordlist.lst")
-    ("upper+number, length 4" password :length 4 :upper t :number t :lower nil
-     :symbol nil :ambiguous nil)))
+macro `epwdgen-define-generator'.")
 
 (defun epwdgen--sanitize-args (args)
   (mapcar (lambda (e)
