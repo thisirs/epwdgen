@@ -108,7 +108,7 @@ FILE and separated by SEP."
     (mapconcat 'identity (split-string pass-out) sep)))
 
 ;;;###autoload
-(defun epwdgen-generate-password (method)
+(defun epwdgen-generate-password (method &rest args)
   "Generate a password"
   (interactive (list
                 (let ((names (mapcar #'car epwdgen-password-presets)))
@@ -118,8 +118,8 @@ FILE and separated by SEP."
                                        (symbol-name (nth 1 preset)))))
          (func-name (if (fboundp epwdgen-name) epwdgen-name (nth 1 preset))))
     (when (called-interactively-p 'interactive)
-      (insert (apply func-name (cddr preset))))
-    (apply func-name (cddr preset))))
+      (insert (apply func-name (append (cddr preset) args))))
+    (apply func-name (append (cddr preset) args))))
 
 
 (provide 'epwdgen)
