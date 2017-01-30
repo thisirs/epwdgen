@@ -28,7 +28,7 @@
 (require 'cl-lib)
 
 (defvar epwdgen-password-presets
-  '(("alphanumeric, " password :upper t :number t :lower t :symbol nil :ambiguous t)
+  '(("alphanumeric" password :upper t :number t :lower t :symbol nil :ambiguous t)
     ("passphrase, 4 words, space separator" passphrase
      :sep " " :file "/home/sylvain/CloudStation/Sylvain/wordlist.lst")
     ("upper+number, length 4" password :length 4 :upper t :number t :lower nil
