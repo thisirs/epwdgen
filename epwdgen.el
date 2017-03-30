@@ -70,6 +70,7 @@ When some argument is missing, ask for it."
                        `(lambda (arg) (interactive ,int-spec) arg)))))
          ,@body))))
 
+;;;###autoload (autoload 'epwdgen-generate-password:password "epwdgen.el" nil t)
 (epwdgen-define-generator password
     "nLength? \nxNumber? \nxUpper? \nxLower? \nxSymbol? \nxAmbiguous? "
   (length number upper lower symbol ambiguous)
@@ -97,6 +98,7 @@ avoid characters like \"l\" and \"1\", \"O\" and \"0\"."
            (loop for i from 1 to length
                  collect (nth (random (length char-list)) char-list)))))
 
+;;;###autoload (autoload 'epwdgen-generate-password:passphrase "epwdgen.el" nil t)
 (epwdgen-define-generator passphrase
     "nLength? \nsFile? \nsSep? "
   (length file sep)
