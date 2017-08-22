@@ -62,13 +62,18 @@ When some argument is missing, ask for it."
          (keys (mapcar #'car args))
          (keys? (mapcar #'caddr args)))
     `(defun* ,defun-sym ,(cons '&optional (cons '&key args))
-       (interactive ,interactive-spec)
-       (let ((int-specs (split-string ,interactive-spec "\n"))
+       (interactive)
+       (let ((int-specs (if (stringp ,interactive-spec)
+                            (split-string ,interactive-spec "\n")
+                          ,interactive-spec))
              (keys? (list ,@keys?)) key? (keys ',keys) key int-spec)
          (while (setq key? (pop keys?) key (pop keys) int-spec (pop int-specs))
            (unless key?
              (set key (call-interactively
-                       `(lambda (arg) (interactive ,int-spec) arg)))))
+                       `(lambda (arg)
+                         (interactive ,(if (stringp int-spec) int-spec
+                                        `(list ,int-spec)))
+                         arg)))))
          ,@body))))
 
 ;;;###autoload (autoload 'epwdgen-generate-password:password "epwdgen.el" nil t)
@@ -95,9 +100,12 @@ avoid characters like \"l\" and \"1\", \"O\" and \"0\"."
                             unless (member i (unless ambiguous '(?_ ?- ?| ?, ?. ?` ?' ?~ ?^ ?\")))
                             collect i)))))
     (random t)
-    (apply 'string
-           (loop for i from 1 to length
-                 collect (nth (random (length char-list)) char-list)))))
+    (let ((password (apply 'string
+                           (loop for i from 1 to length
+                                 collect (nth (random (length char-list)) char-list)))))
+      (if (called-interactively-p 'interactive)
+          (insert password)
+        password))))
 
 ;;;###autoload (autoload 'epwdgen-generate-password:passphrase "epwdgen.el" nil t)
 (epwdgen-define-generator passphrase
@@ -108,7 +116,8 @@ FILE and separated by SEP."
   (unless (executable-find "shuf") (error "Unable to find program `shuf'"))
   (let* ((shuf-cmd (format "shuf -n %d %s" length (shell-quote-argument file)))
          (pass-out (shell-command-to-string shuf-cmd)))
-    (mapconcat 'identity (split-string pass-out) sep)))
+    (funcall (if (called-interactively-p 'interactive) 'insert 'identity)
+             (mapconcat 'identity (split-string pass-out) sep))))
 
 ;;;###autoload
 (defun epwdgen-generate-password (method &rest args)
