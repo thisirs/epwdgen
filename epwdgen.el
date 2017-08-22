@@ -28,10 +28,9 @@
 (require 'cl-lib)
 
 (defvar epwdgen-password-presets
-  '(("alphanumeric" password :upper t :number t :lower t :symbol nil :ambiguous t)
-    ("passphrase, 4 words, space separator" passphrase
-     :sep " " :file "/home/sylvain/CloudStation/Sylvain/wordlist.lst")
-    ("upper+number, length 4" password :length 4 :upper t :number t :lower nil
+  '(("alphanumeric" password :letter mixed :number t :symbol nil :ambiguous t)
+    ("passphrase, 4 words, space separator" passphrase :sep " ")
+    ("upper+number, length 4" password :length 4 :letter uppercase-only :number t
      :symbol nil :ambiguous nil))
   "List of preset to generate passwords.
 
@@ -39,6 +38,18 @@ Each element is of the form (DESC SYMBOL [ARGS]) where DESC is a
 string describing the preset and SYMBOL the function name to call
 with arguments ARGS. SYMBOL can also be a symbol used with the
 macro `epwdgen-define-generator'.")
+
+(defconst epwdgen-letter-uppercase
+  (loop for i from ?A to ?Z collect i))
+
+(defconst epwdgen-letter-lowercase
+  (loop for i from ?a to ?z collect i))
+
+(defconst epwdgen-numbers
+  (loop for i from ?0 to ?9 collect i))
+
+(defconst epwdgen-symbols
+  '(?! ?@ ?# ?$ ?% ?& ?* ?\( ?\) ?+ ?= ?/ ?{ ?} ?\[ ?\] ?: ?\; ?< ?> ?_ ?- ?| ?, ?. ?` ?' ?~ ?^ ?\"))
 
 (eval-and-compile
   (defun epwdgen--sanitize-args (args)
@@ -63,9 +74,9 @@ When some argument is missing, ask for it."
          (keys? (mapcar #'caddr args)))
     `(defun* ,defun-sym ,(cons '&optional (cons '&key args))
        (interactive)
-       (let ((int-specs (if (stringp ,interactive-spec)
+       (let ((int-specs (if (stringp ',interactive-spec)
                             (split-string ,interactive-spec "\n")
-                          ,interactive-spec))
+                          ',interactive-spec))
              (keys? (list ,@keys?)) key? (keys ',keys) key int-spec)
          (while (setq key? (pop keys?) key (pop keys) int-spec (pop int-specs))
            (unless key?
@@ -78,31 +89,48 @@ When some argument is missing, ask for it."
 
 ;;;###autoload (autoload 'epwdgen-generate-password:password "epwdgen.el" nil t)
 (epwdgen-define-generator password
-    "nLength? \nxNumber? \nxUpper? \nxLower? \nxSymbol? \nxAmbiguous? "
-  (length number upper lower symbol ambiguous)
-  "Return a string of LENGTH random characters.  If UPPER is non-nil,
-use uppercase letters. If lower is non-nil, use lowercase
-letters. If NUMBER is non-nil, use numbers. If SYMBOL is non-nil,
-use one of \"!\"#$%&'()*+'-./:;<=>?@`{}|~\". If AMBIGUOUS is nil,
-avoid characters like \"l\" and \"1\", \"O\" and \"0\"."
+    ("nLength? "
+     (intern (completing-read "Letters? " '(uppercase-only lowercase-only mixed)))
+     (yes-or-no-p "Numbers? ")
+     (yes-or-no-p "Symbols? ")
+     (yes-or-no-p "Remove ambiguous characters? ")
+     (yes-or-no-p "No empty group? "))
+  (length letter number symbol ambiguous group)
+  "Return a string of LENGTH random characters.  If NUMBER is non-nil,
+use numbers. If SYMBOL is non-nil, use one of \"!\"#$%&'()*+'-./:;<=>?@`{}|~\".
+ If AMBIGUOUS is nil, avoid characters like \"l\" and \"1\", \"O\" and \"0\"."
   (let ((char-list
          (append
-          (and upper (loop for i from ?A to ?Z unless
-                           (member i (unless ambiguous '(?I ?O ?G)))
-                           collect i))
-          (and lower (loop for i from ?a to ?z unless
-                           (member i (unless ambiguous '(?l ?o)))
-                           collect i))
-          (and number (loop for i from ?0 to ?9 unless
-                            (member i (unless ambiguous '(?0 ?1 ?6)))
+          (if (memq letter '(mixed uppercase-only))
+              (loop for i in epwdgen-letter-uppercase
+                    unless (member i (unless ambiguous '(?I ?O ?G)))
+                    collect i))
+          (if (memq letter '(mixed lowercase-only))
+              (loop for i in epwdgen-letter-lowercase
+                    unless (member i (unless ambiguous '(?l ?o)))
+                    collect i))
+          (and number (loop for i in epwdgen-numbers
+                            unless (member i (unless ambiguous '(?0 ?1 ?6)))
                             collect i))
-          (and symbol (loop for i in '(?! ?@ ?# ?$ ?% ?& ?* ?\( ?\) ?+ ?= ?/ ?{ ?} ?\[ ?\] ?: ?\; ?< ?> ?_ ?- ?| ?, ?. ?` ?' ?~ ?^ ?\")
+          (and symbol (loop for i in epwdgen-symbols
                             unless (member i (unless ambiguous '(?_ ?- ?| ?, ?. ?` ?' ?~ ?^ ?\")))
                             collect i)))))
     (random t)
-    (let ((password (apply 'string
-                           (loop for i from 1 to length
-                                 collect (nth (random (length char-list)) char-list)))))
+    (let (password)
+      (while
+          (progn
+            (setq password (loop for i from 1 to length
+                                 collect (nth (random (length char-list)) char-list)))
+            (and group
+                 (or (and number
+                          (null (seq-intersection password epwdgen-numbers)))
+                     (and (memq letter '(mixed lowercase-only))
+                          (null (seq-intersection password epwdgen-letter-lowercase)))
+                     (and (memq letter '(mixed uppercase-only))
+                          (null (seq-intersection password epwdgen-letter-uppercase)))
+                     (and symbol
+                          (null (seq-intersection password epwdgen-symbols)))))))
+      (setq password (apply #'string password))
       (if (called-interactively-p 'interactive)
           (insert password)
         password))))
@@ -129,9 +157,9 @@ FILE and separated by SEP."
          (epwdgen-name (intern (concat "epwdgen-generate-password:"
                                        (symbol-name (nth 1 preset)))))
          (func-name (if (fboundp epwdgen-name) epwdgen-name (nth 1 preset))))
-    (when (called-interactively-p 'interactive)
-      (insert (apply func-name (append (cddr preset) args))))
-    (apply func-name (append (cddr preset) args))))
+    (let ((password (apply func-name (append (cddr preset) args))))
+      (if (called-interactively-p 'interactive)
+          (insert password) password))))
 
 
 (provide 'epwdgen)
