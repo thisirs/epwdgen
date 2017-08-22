@@ -40,14 +40,15 @@ string describing the preset and SYMBOL the function name to call
 with arguments ARGS. SYMBOL can also be a symbol used with the
 macro `epwdgen-define-generator'.")
 
-(defun epwdgen--sanitize-args (args)
-  (mapcar (lambda (e)
-            (let ((sym (if (symbolp e) e (car e))))
-              (list sym
-                    (car (cdr-safe e))
-                    (or (car (cdr (cdr-safe e)))
-                        (intern (concat (symbol-name sym) "?"))))))
-          args))
+(eval-and-compile
+  (defun epwdgen--sanitize-args (args)
+    (mapcar (lambda (e)
+              (let ((sym (if (symbolp e) e (car e))))
+                (list sym
+                      (car (cdr-safe e))
+                      (or (car (cdr (cdr-safe e)))
+                          (intern (concat (symbol-name sym) "?"))))))
+            args)))
 
 (defmacro epwdgen-define-generator (name interactive-spec args &rest body)
   "Define a function to generate passwords.
@@ -90,7 +91,7 @@ avoid characters like \"l\" and \"1\", \"O\" and \"0\"."
           (and number (loop for i from ?0 to ?9 unless
                             (member i (unless ambiguous '(?0 ?1 ?6)))
                             collect i))
-          (and symbol (loop for i in '(?! ?@ ?# ?$ ?% ?& ?* ?( ?) ?+ ?= ?/ ?{ ?} ?[ ?] ?: ?\; ?< ?> ?_ ?- ?| ?, ?. ?` ?' ?~ ?^ ?\")
+          (and symbol (loop for i in '(?! ?@ ?# ?$ ?% ?& ?* ?\( ?\) ?+ ?= ?/ ?{ ?} ?\[ ?\] ?: ?\; ?< ?> ?_ ?- ?| ?, ?. ?` ?' ?~ ?^ ?\")
                             unless (member i (unless ambiguous '(?_ ?- ?| ?, ?. ?` ?' ?~ ?^ ?\")))
                             collect i)))))
     (random t)
