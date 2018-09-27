@@ -142,10 +142,18 @@ use numbers. If SYMBOL is non-nil, use one of \"!\"#$%&'()*+'-./:;<=>?@`{}|~\".
   "Generate a passphrase of length LENGTH from words taken from
 FILE and separated by SEP."
   (unless (executable-find "shuf") (error "Unable to find program `shuf'"))
-  (let* ((shuf-cmd (format "shuf -n %d %s" length (shell-quote-argument file)))
-         (pass-out (shell-command-to-string shuf-cmd)))
+  (let ((args (list "-n" (format "%s" length) (shell-quote-argument file)))
+        return passphrase)
+    (setq passphrase
+          (with-temp-buffer
+            (setq return (apply #'call-process "shuf" nil '(t t) nil args))
+            (unless (= return 0)
+              (error "Command failed: shuf %s:\n%s"
+                     (mapconcat #'shell-quote-argument args " ")
+                     (buffer-string)))
+            (split-string (buffer-string))))
     (funcall (if (called-interactively-p 'interactive) 'insert 'identity)
-             (mapconcat 'identity (split-string pass-out) sep))))
+             (mapconcat 'identity passphrase sep))))
 
 ;;;###autoload
 (defun epwdgen-generate-password (method &rest args)
