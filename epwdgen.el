@@ -82,9 +82,9 @@ When some argument is missing, ask for it."
            (unless key?
              (set key (call-interactively
                        `(lambda (arg)
-                         (interactive ,(if (stringp int-spec) int-spec
-                                        `(list ,int-spec)))
-                         arg)))))
+                          (interactive ,(if (stringp int-spec) int-spec
+                                          `(list ,int-spec)))
+                          arg)))))
          ,@body))))
 
 ;;;###autoload (autoload 'epwdgen-generate-password:password "epwdgen.el" nil t)
