@@ -40,13 +40,13 @@ with arguments ARGS. SYMBOL can also be a symbol used with the
 macro `epwdgen-define-generator'.")
 
 (defconst epwdgen-letter-uppercase
-  (loop for i from ?A to ?Z collect i))
+  (cl-loop for i from ?A to ?Z collect i))
 
 (defconst epwdgen-letter-lowercase
-  (loop for i from ?a to ?z collect i))
+  (cl-loop for i from ?a to ?z collect i))
 
 (defconst epwdgen-numbers
-  (loop for i from ?0 to ?9 collect i))
+  (cl-loop for i from ?0 to ?9 collect i))
 
 (defconst epwdgen-symbols
   '(?! ?@ ?# ?$ ?% ?& ?* ?\( ?\) ?+ ?= ?/ ?{ ?} ?\[ ?\] ?: ?\; ?< ?> ?_ ?- ?| ?, ?. ?` ?' ?~ ?^ ?\"))
@@ -102,25 +102,25 @@ use numbers. If SYMBOL is non-nil, use one of \"!\"#$%&'()*+'-./:;<=>?@`{}|~\".
   (let ((char-list
          (append
           (if (memq letter '(mixed uppercase-only))
-              (loop for i in epwdgen-letter-uppercase
-                    unless (member i (unless ambiguous '(?I ?O ?G)))
-                    collect i))
+              (cl-loop for i in epwdgen-letter-uppercase
+                       unless (member i (unless ambiguous '(?I ?O ?G)))
+                       collect i))
           (if (memq letter '(mixed lowercase-only))
-              (loop for i in epwdgen-letter-lowercase
-                    unless (member i (unless ambiguous '(?l ?o)))
-                    collect i))
-          (and number (loop for i in epwdgen-numbers
-                            unless (member i (unless ambiguous '(?0 ?1 ?6)))
-                            collect i))
-          (and symbol (loop for i in epwdgen-symbols
-                            unless (member i (unless ambiguous '(?_ ?- ?| ?, ?. ?` ?' ?~ ?^ ?\")))
-                            collect i)))))
+              (cl-loop for i in epwdgen-letter-lowercase
+                       unless (member i (unless ambiguous '(?l ?o)))
+                       collect i))
+          (and number (cl-loop for i in epwdgen-numbers
+                               unless (member i (unless ambiguous '(?0 ?1 ?6)))
+                               collect i))
+          (and symbol (cl-loop for i in epwdgen-symbols
+                               unless (member i (unless ambiguous '(?_ ?- ?| ?, ?. ?` ?' ?~ ?^ ?\")))
+                               collect i)))))
     (random t)
     (let (password)
       (while
           (progn
-            (setq password (loop for i from 1 to length
-                                 collect (nth (random (length char-list)) char-list)))
+            (setq password (cl-loop for i from 1 to length
+                                    collect (nth (random (length char-list)) char-list)))
             (and group
                  (or (and number
                           (null (seq-intersection password epwdgen-numbers)))
