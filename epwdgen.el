@@ -72,7 +72,7 @@ When some argument is missing, ask for it."
          (args (epwdgen--sanitize-args args))
          (keys (mapcar #'car args))
          (keys? (mapcar #'caddr args)))
-    `(defun* ,defun-sym ,(cons '&optional (cons '&key args))
+    `(cl-defun ,defun-sym ,(cons '&optional (cons '&key args))
        (interactive)
        (let ((int-specs (if (stringp ',interactive-spec)
                             (split-string ,interactive-spec "\n")
